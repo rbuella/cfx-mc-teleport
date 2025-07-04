@@ -46,11 +46,27 @@ function OpenTeleportMenu()
 end
 
 function TeleportTo(coords, label)
-    local ped = PlayerPedId()
-    lastLocation = GetEntityCoords(ped)
-    SetEntityCoords(ped, coords.x, coords.y, coords.z + 0.5)
-    Notify(Config.Messages.TeleportSuccess, "success")
+    if not coords or not coords.x or not coords.y or not coords.z then
+        Notify("Invalid coordinates.", "error")
+        return
+    end
 
+    local ped = PlayerPedId()
+    local vehicle = GetVehiclePedIsIn(ped, false)
+
+    lastLocation = GetEntityCoords(ped)
+
+    if vehicle ~= 0 and Config.TeleportWithVehicle then
+        -- In vehicle & config allows teleporting with vehicle
+        SetEntityCoords(vehicle, coords.x, coords.y, coords.z + 0.5, false, false, false, true)
+        SetEntityHeading(vehicle, coords.w or GetEntityHeading(vehicle))
+    else
+        -- Always teleport ped only
+        SetEntityCoords(ped, coords.x, coords.y, coords.z + 0.5, false, false, false, true)
+        SetEntityHeading(ped, coords.w or GetEntityHeading(ped))
+    end
+
+    Notify(Config.Messages.TeleportSuccess, "success")
     TriggerServerEvent("teleport:logTeleport", { coords = coords, label = label })
 end
 
@@ -66,9 +82,13 @@ function CheckPermissions(callback)
 end
 
 function Notify(message, type)
-    lib.notify({
-        title = "Teleport",
-        description = message,
-        type = type or "inform"
-    })
+    if lib and lib.notify then
+        lib.notify({
+            title = "Teleport",
+            description = message,
+            type = type or "inform"
+        })
+    else
+        print("[Teleport] " .. (type or "info") .. ": " .. message)
+    end
 end
