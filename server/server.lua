@@ -8,17 +8,17 @@ ESX.RegisterServerCallback('teleport:checkPermission', function(source, cb)
         return
     end
 
-    local steamID = GetPlayerIdentifier(source, 0)
-    for _, allowedSteamID in ipairs(Config.AllowedSteamIDs) do
-        if steamID == allowedSteamID then
+    local identifier = Player.identifier
+    for _, allowedID in ipairs(Config.AllowedSteamIDs) do
+        if identifier == allowedID then
             cb(true)
             return
         end
     end
 
-    local playerJob = Player.job.name
+    local playerJob = string.lower(Player.job.name)
     for _, job in ipairs(Config.AllowedJobs) do
-        if playerJob == job then
+        if playerJob == string.lower(job) then
             cb(true)
             return
         end
@@ -29,14 +29,25 @@ end)
 
 RegisterNetEvent("teleport:logTeleport", function(data)
     local src = source
-    local name = GetPlayerName(src)
+    local Player = ESX.GetPlayerFromId(src)
+    local name = GetPlayerName(src) or "Unknown"
     local coords = data.coords
     local label = data.label or "Unknown"
-    local message = string.format("**%s** teleported to **%s** (x: %.2f, y: %.2f, z: %.2f)", name, label, coords.x, coords.y, coords.z)
+
+    local message = string.format(
+        "**%s** (ID: %s) teleported to **%s** (x: %.2f, y: %.2f, z: %.2f)\nIdentifier: `%s`",
+        name, src, label, coords.x, coords.y, coords.z, Player.identifier
+    )
+
     SendDiscordLog("Teleport Used", message, 3447003)
 end)
 
 function SendDiscordLog(title, message, color)
+    if not Config.DiscordWebhook or Config.DiscordWebhook == "" then
+        print("[Teleport Log] Discord webhook not set.")
+        return
+    end
+
     local embed = {{
         ["title"] = title,
         ["description"] = message,
@@ -44,7 +55,7 @@ function SendDiscordLog(title, message, color)
     }}
 
     PerformHttpRequest(Config.DiscordWebhook, function() end, 'POST', json.encode({
-        username = "Teleport Logs",
+        username = Config.WebhookName or "Teleport Logs",
         embeds = embed
     }), { ['Content-Type'] = 'application/json' })
 end
