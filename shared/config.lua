@@ -1,11 +1,13 @@
 Config = {}
 
 Config.Framework = "esx"
+Config.WebhookName = "Teleport Logs"
 Config.DiscordWebhook = "https://discord.com/api/webhooks/..." -- Put your webhook URL here
 
 
 Config.RequirePermission = false -- true = only allowed jobs/SteamIDs can teleport
 Config.AllowedJobs = {"police", "ambulance"} -- Allowed jobs if permission is required
+Config.TeleportWithVehicle = true -- true = teleport with vehicle if player is in one, false = always teleport only the player
 
 Config.Locations = {
     {label = "Police Station 🚔", coords = vector3(425.1, -979.5, 30.7)},
